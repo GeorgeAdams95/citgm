@@ -1,14 +1,14 @@
 {
   "chalk": {
-    "replace": true,
+    "npm": true,
     "prefix": "v"
   },
   "colors": {
-    "replace": true,
+    "npm": true,
     "prefix": "v"
   },
   "yosay": {
-    "replace": true,
+    "npm": true,
     "prefix": "v"
   }
 }
