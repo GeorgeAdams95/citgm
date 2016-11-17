@@ -1,6 +1,7 @@
 {
   "lodash": {
-    "replace": true
+    "replace": true,
+    "flaky": "aix"
   },
   "underscore": {
     "replace": true,
@@ -52,7 +53,9 @@
   },
   "socket.io": {
     "replace": true,
-    "flaky": true
+    "flaky": {
+      "aix": true
+    }
   },
   "fs-extra": {
     "replace": true,
@@ -71,10 +74,10 @@
   },
   "rimraf": {
     "replace": true,
-    "prefix": "v"
+    "prefix": "v",
+    "flaky": "aix"
   },
   "david": {
-    "replace": true,
     "prefix": "v",
     "flaky": true
   },
@@ -90,12 +93,12 @@
   },
   "browserify": {
     "replace": true,
-    "flaky": ["v7"]
+    "flaky": ["v7", "v8"]
   },
   "watchify": {
     "replace": true,
     "prefix": "v",
-    "flaky": ["ppc", "v7"]
+    "flaky": ["ppc", "v7", "v8"]
   },
   "stylus": {
     "replace": true
@@ -113,13 +116,13 @@
   "react": {
     "replace": true,
     "prefix": "v",
-    "flaky": ["v0.10", "v0.12", "v6", "v7"]
+    "flaky": ["v0.10", "v0.12", "v6", "v7", "v8"]
   },
   "gulp": {
     "replace": true,
     "prefix": "v",
     "flaky": {
-      "ppc": ["v5", "v6"]
+      "ppc": ["v5", "v6", "v8"]
     }
   },
   "moment": {
@@ -127,7 +130,8 @@
     "flaky": true
   },
   "ws": {
-    "replace": true
+    "replace": true,
+    "flaky": ["s390x"]
   },
   "vinyl": {
     "replace": true,
@@ -217,7 +221,8 @@
     "flaky": {
       "s390": true,
       "darwin": true,
-      "v0.12": ["fedora22", "ubuntu1204"]
+      "v0.12": ["fedora22", "ubuntu1204"],
+      "aix": true
     }
   },
   "bluebird": {
@@ -227,7 +232,7 @@
   "mkdirp": {
     "replace": true,
     "master": true,
-    "flaky": ["v6", "v7"]
+    "flaky": ["v6", "v7", "v8"]
   },
   "yeoman-generator": {
     "replace": true,
@@ -300,7 +305,8 @@
   },
   "ember-cli": {
     "replace": true,
-    "prefix": "v"
+    "prefix": "v",
+    "flaky": "aix"
   },
   "node-sass": {
     "replace": true,
