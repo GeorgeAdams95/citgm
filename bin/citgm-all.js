@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 var yargs = require('yargs');
+var os = require('os');
 var async = require('async');
+var _ = require('lodash');
 
 var update = require('../lib/update');
 var citgm = require('../lib/citgm');
@@ -10,7 +12,6 @@ var reporter = require('../lib/reporter');
 var getLookup = require('../lib/lookup').get;
 var commonArgs = require('../lib/common-args');
 var isMatch = require('../lib/match-conditions');
-
 yargs = commonArgs(yargs)
   .usage('citgm-all [options]')
   .option('fail-flaky', {
@@ -47,8 +48,13 @@ var options = {
 
 var lookup = getLookup(options);
 if (!lookup) {
-  log.error('the json file cannot be found or there is an error in the file!');
+  log.error('error', 'the json file cannot be found or there is an error in the file!');
   process.exit(1);
+}
+
+if (app.autoParallel) {
+  app.parallel = require('os').cpus().length;
+  log.info('cores', 'detected ' + app.parallel + ' cores on this system');
 }
 
 if (!citgm.windows) {
@@ -77,6 +83,10 @@ function runCitgm (mod, name, next) {
   function cleanup() {
     bailed = true;
     runner.cleanup();
+    process.removeListener('SIGINT', cleanup);
+    process.removeListener('SIGHUP', cleanup);
+    process.removeListener('SIGBREAK', cleanup);
+    process.setMaxListeners(process.getMaxListeners() - app.parallel || process.getMaxListeners());
   }
 
   process.on('SIGINT', cleanup);
@@ -84,28 +94,47 @@ function runCitgm (mod, name, next) {
   process.on('SIGBREAK', cleanup);
 
   runner.on('start', function(name) {
-    log.info('starting', name);
+    log.info(name, 'starting');
   }).on('fail', function(err) {
     log.error('failure', err.message);
   }).on('data', function(type,key,message) {
     log[type](key, message);
   }).on('end', function(result) {
     if (result.error) {
-      log.error('done', 'The test suite for ' + result.name + ' version ' + result.version + ' failed');
+      log.error(result.name, 'Done - The test suite for ' + result.name + ' version ' + result.version + ' failed');
     }
     else {
-      log.info('done', 'The test suite for ' + result.name + ' version ' + result.version + ' passed.');
+      log.info(result.name, 'Done - The test suite for ' + result.name + ' version ' + result.version + ' passed.');
     }
     modules.push(result);
-    process.removeListener('SIGINT', cleanup);
-    process.removeListener('SIGHUP', cleanup);
-    process.removeListener('SIGBREAK', cleanup);
+    if (!bailed) {
+      process.removeListener('SIGINT', cleanup);
+      process.removeListener('SIGHUP', cleanup);
+      process.removeListener('SIGBREAK', cleanup);
+      process.setMaxListeners(process.getMaxListeners() - app.parallel || process.getMaxListeners());
+    }
     return next(bailed);
   }).run();
 }
+function runTask(task, next) {
+  runCitgm(task.mod, task.name, next);
+}
+
+function filterLookup(result, value, key) {
+  result.push({
+    name: key,
+    mod: value
+  });
+  return result;
+}
 
 function launch() {
-  async.forEachOfSeries(lookup, runCitgm, function done () {
+  var collection = _.reduce(lookup, filterLookup, []);
+
+  var q = async.queue(runTask, app.parallel);
+  q.push(collection);
+  function done () {
+    q.drain = null;
     reporter.logger(log, modules);
 
     if (app.markdown) {
@@ -126,5 +155,22 @@ function launch() {
     }
 
     process.exit(reporter.util.hasFailures(modules));
-  });
+  }
+
+  function abort() {
+    q.pause();
+    q.kill();
+    process.exitCode = 1;
+    process.removeListener('SIGINT', abort);
+    process.removeListener('SIGHUP', abort);
+    process.removeListener('SIGBREAK', abort);
+    process.setMaxListeners(process.getMaxListeners() - app.parallel || process.getMaxListeners());
+    done();
+  }
+
+  q.drain = done;
+
+  process.on('SIGINT', abort);
+  process.on('SIGHUP', abort);
+  process.on('SIGBREAK', abort);
 }
