@@ -31,6 +31,7 @@ test('tempDirectory.create:', function (t) {
 });
 
 test('tempDirectory.create: bad path', function (t) {
+
   var path = tempDirectory.__get__('path');
   tempDirectory.__set__('path', {
     join: function () {
@@ -39,8 +40,12 @@ test('tempDirectory.create: bad path', function (t) {
   });
   t.notOk(badContext.path, 'badContext should not have a path');
   tempDirectory.create(badContext, function (e) {
-    t.notEquals(e.message.search(/\/dev\/null/), -1, 'the message should include the path /dev/null');
-    tempDirectory.__set__('path', path);
+    if ( process.platform === 'win32' ) {
+      t.pass('SKIP on Windows');
+    } else {
+      t.notEquals(e.message.search(/\/dev\/null/), -1, 'the message should include the path /dev/null');
+      tempDirectory.__set__('path', path);
+    }
     t.end();
   });
 });
@@ -60,7 +65,11 @@ test('tempDirectory.remove:', function (t) {
 test('tempDirectory.remove: bad path', function (t) {
   t.ok(badContext, 'badContext should have a path');
   tempDirectory.remove(badContext, function (e) {
-    t.notEquals(e.message.search(/\/dev\/null/), -1, 'the message should include the path /dev/null');
+    if ( process.platform === 'win32' ) {
+      t.pass('SKIP on Windows');
+    } else {
+      t.notEquals(e.message.search(/\/dev\/null/), -1, 'the message should include the path /dev/null');
+    }
     t.end();
   });
 });

@@ -1,14 +1,17 @@
 {
   "omg-i-pass": {
     "replace": false,
-    "script": "./example-test-script-failing.sh"
+    "script": "./example-test-script-failing.sh",
+    "scriptWin": "example-test-script-failing.bat"
   },
   "omg-i-have-script": {
     "prefix": "v",
     "script": "./example-test-script-passing.sh",
+    "scriptWin": "example-test-script-passing.bat",
     "stripAnsi": true
   },
   "omg-i-fail": {
-    "script": "./example-test-script-passing.sh"
+    "script": "./example-test-script-passing.sh",
+    "scriptWin": "example-test-script-passing.bat"
   }
 }

@@ -39,7 +39,11 @@ test('create-options: with uid / gid', function (t) {
   var options = createOptions(cwd, context);
 
   t.equals(typeof options, 'object', 'We should get back an object');
-  t.equals(options.uid, 1337, 'The uid should be set to the expected value');
-  t.equals(options.gid, 1337, 'The gid should be set to the expected value');
+  if ( process.platform === 'win32' ) {
+    t.pass('SKIP on Windows');
+  } else {
+    t.equals(options.uid, 1337, 'The uid should be set to the expected value');
+    t.equals(options.gid, 1337, 'The gid should be set to the expected value');
+  }
   t.end();
 });

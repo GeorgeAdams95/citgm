@@ -10,8 +10,15 @@ var run = rewire('../../lib/npm/script/run');
 
 var fixtures = path.join(__dirname, '..', 'fixtures');
 
-var passingScript = path.join(fixtures, 'example-test-script-passing.sh');
-var failingScript = path.join(fixtures, 'example-test-script-failing.sh');
+var passingScript = '';
+var failingScript = '';
+if ( process.platform === 'win32' ) {
+  passingScript = path.join(fixtures, 'example-test-script-passing.bat');
+  failingScript = path.join(fixtures, 'example-test-script-failing.bat');
+} else {
+  passingScript = path.join(fixtures, 'example-test-script-passing.sh');
+  failingScript = path.join(fixtures, 'example-test-script-failing.sh');
+}
 var badPath = path.join(fixtures, 'example-test-script-does-not-exist');
 
 var sandbox = path.join(os.tmpdir(), 'citgm-' + Date.now() + 'run-test');

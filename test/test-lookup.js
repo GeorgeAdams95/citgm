@@ -192,7 +192,11 @@ test('lookup: lookup with script', function (t) {
 
   lookup(context, function (err) {
     t.error(err);
-    t.equals(context.module.script, './example-test-script-passing.sh');
+    if (process.platform === 'win32') {
+      t.equals(context.module.script, 'example-test-script-passing.bat');
+    } else {
+      t.equals(context.module.script, './example-test-script-passing.sh');
+    }
     t.end();
   });
 });
