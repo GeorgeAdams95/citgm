@@ -2,13 +2,24 @@
 
 var test = require('tap').test;
 
-var spawn = require('../../lib/spawn');
+var spawn = require('child_process').spawn;
 
 var citgmPath = require.resolve('../../bin/citgm.js');
 
+function callCitgm(params) {
+  return spawn(process.argv[0], [citgmPath].concat(params));
+}
+
+var devDir = '';
+if (process.platform === 'win32') {
+  devDir = 'NUL';
+} else {
+  devDir = '/dev/null';
+}
+
 test('bin: omg-i-pass /w tap output /w junit', function (t) {
   t.plan(1);
-  var proc = spawn(citgmPath, ['omg-i-pass', '-t', '-x']);
+  var proc = callCitgm(['omg-i-pass', '-t', '-x']);
   proc.on('error', function(err) {
     t.error(err);
     t.fail('we should not get an error testing omg-i-pass');
@@ -20,7 +31,7 @@ test('bin: omg-i-pass /w tap output /w junit', function (t) {
 
 test('bin: omg-i-fail /w markdown output /w nodedir', function (t) {
   t.plan(1);
-  var proc = spawn(citgmPath, ['omg-i-fail', '-m', '-d', '/dev/null']);
+  var proc = callCitgm(['omg-i-fail', '-m', '-d', '/dev/null']);
   proc.on('error', function(err) {
     t.error(err);
     t.fail('we should not get an error testing omg-i-pass');
@@ -32,7 +43,7 @@ test('bin: omg-i-fail /w markdown output /w nodedir', function (t) {
 
 test('bin: omg-i-fail /w custom script /w tap to file /w junit to file /w append', function (t) {
   t.plan(1);
-  var proc = spawn(citgmPath, ['omg-i-fail', '-l', './test/fixtures/custom-lookup-script.json', '--tap', '/dev/null', '--junit', '/dev/null', '--append']);
+  var proc = callCitgm(['omg-i-fail', '-l', './test/fixtures/custom-lookup-script.json', '--tap', devDir, '--junit', devDir, '--append']);
   proc.on('error', function(err) {
     t.error(err);
     t.fail('we should not get an error testing omg-i-fail');
@@ -44,7 +55,7 @@ test('bin: omg-i-fail /w custom script /w tap to file /w junit to file /w append
 
 test('bin: omg-i-pass /w custom script /w tap to file /w junit to file /w append', function (t) {
   t.plan(1);
-  var proc = spawn(citgmPath, ['omg-i-pass', '-l', './test/fixtures/custom-lookup-script.json', '--tap', '/dev/null', '--junit', '/dev/null', '--append']);
+  var proc = callCitgm(['omg-i-pass', '-l', './test/fixtures/custom-lookup-script.json', '--tap', devDir, '--junit', devDir, '--append']);
   proc.on('error', function(err) {
     t.error(err);
     t.fail('we should not get an error testing omg-i-pass');
@@ -56,7 +67,7 @@ test('bin: omg-i-pass /w custom script /w tap to file /w junit to file /w append
 
 test('bin: no module /w root check', function (t) {
   t.plan(1);
-  var proc = spawn(citgmPath, ['-s']);
+  var proc = callCitgm(['-s']);
   proc.on('error', function(err) {
     t.error(err);
     t.fail('we should not get an error');
@@ -68,23 +79,26 @@ test('bin: no module /w root check', function (t) {
 
 test('bin: sigterm', function (t) {
   t.plan(1);
-
-  var proc = spawn(citgmPath, ['omg-i-pass', '-v', 'verbose']);
-  proc.on('error', function(err) {
-    t.error(err);
-    t.fail('we should not get an error testing omg-i-pass');
-  });
-  proc.stdout.once('data', function () {
-    proc.kill('SIGINT');
-  });
-  proc.on('exit', function (code) {
-    t.equal(code, 1, 'omg-i-pass should fail from a sigint');
-  });
+  if ( process.platform === 'win32' ) {
+    t.pass('SKIP on Windows');
+  } else {
+    var proc = callCitgm(['omg-i-pass', '-v', 'verbose']);
+    proc.on('error', function(err) {
+      t.error(err);
+      t.fail('we should not get an error testing omg-i-pass');
+    });
+    proc.stdout.once('data', function () {
+      proc.kill('SIGINT');
+    });
+    proc.on('exit', function (code) {
+      t.equal(code, 1, 'omg-i-pass should fail from a sigint');
+    });
+  }
 });
 
 test('bin: install from sha', function (t) {
   t.plan(1);
-  var proc = spawn(citgmPath, ['omg-i-pass', '-t', '-c', '37c34bad563599782c622baf3aaf55776fbc38a8']);
+  var proc = callCitgm(['omg-i-pass', '-t', '-c', '37c34bad563599782c622baf3aaf55776fbc38a8']);
   proc.on('error', function(err) {
     t.error(err);
     t.fail('we should not get an error testing omg-i-pass');

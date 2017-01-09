@@ -1,13 +1,18 @@
 'use strict';
 
 var test = require('tap').test;
-var spawn = require('../../lib/spawn');
+var spawn = require('child_process').spawn;
 
 var citgmAllPath = require.resolve('../../bin/citgm-all.js');
 
+
+function callCitgm(params) {
+  return spawn(process.argv[0], [citgmAllPath].concat(params));
+}
+
 test('citgm-all: /w markdown', function (t) {
   t.plan(1);
-  var proc = spawn(citgmAllPath, ['-l', 'test/fixtures/custom-lookup.json', '-m']);
+  var proc = callCitgm(['-l', 'test/fixtures/custom-lookup.json', '-m']);
   proc.on('error', function(err) {
     t.error(err);
     t.fail('we should not get an error testing omg-i-pass');
@@ -19,7 +24,7 @@ test('citgm-all: /w markdown', function (t) {
 
 test('citgm-all: envVar', function (t) {
   t.plan(1);
-  var proc = spawn(citgmAllPath, ['-l', 'test/fixtures/custom-lookup-envVar.json']);
+  var proc = callCitgm(['-l', 'test/fixtures/custom-lookup-envVar.json']);
   proc.on('error', function(err) {
     t.error(err);
   });
@@ -30,7 +35,7 @@ test('citgm-all: envVar', function (t) {
 
 test('citgm-all: /w missing lookup.json', function (t) {
   t.plan(1);
-  var proc = spawn(citgmAllPath, ['-l', 'test/fixtures/this-does-not-exist-json']);
+  var proc = callCitgm(['-l', 'test/fixtures/this-does-not-exist-json']);
   proc.on('error', function(err) {
     t.error(err);
   });
@@ -41,7 +46,7 @@ test('citgm-all: /w missing lookup.json', function (t) {
 
 test('citgm-all: /w bad lookup.json', function (t) {
   t.plan(1);
-  var proc = spawn(citgmAllPath, ['-l', 'test/fixtures/custom-lookup-broken.json']);
+  var proc = callCitgm(['-l', 'test/fixtures/custom-lookup-broken.json']);
   proc.on('error', function(err) {
     t.error(err);
   });
@@ -52,7 +57,7 @@ test('citgm-all: /w bad lookup.json', function (t) {
 
 test('citgm-all: fail /w tap /w junit', function (t) {
   t.plan(1);
-  var proc = spawn(citgmAllPath, ['-l', 'test/fixtures/custom-lookup-fail.json', '-t', '-x']);
+  var proc = callCitgm(['-l', 'test/fixtures/custom-lookup-fail.json', '-t', '-x']);
   proc.on('error', function(err) {
     t.error(err);
   });
@@ -63,7 +68,7 @@ test('citgm-all: fail /w tap /w junit', function (t) {
 
 test('citgm-all: flaky-fail', function (t) {
   t.plan(1);
-  var proc = spawn(citgmAllPath, ['-l', 'test/fixtures/custom-lookup-flaky.json']);
+  var proc = callCitgm(['-l', 'test/fixtures/custom-lookup-flaky.json']);
   proc.on('error', function(err) {
     t.error(err);
   });
@@ -74,7 +79,7 @@ test('citgm-all: flaky-fail', function (t) {
 
 test('citgm-all: flaky-fail ignoring flakyness', function (t) {
   t.plan(1);
-  var proc = spawn(citgmAllPath, ['-f', '-l', 'test/fixtures/custom-lookup-flaky.json']);
+  var proc = callCitgm(['-f', '-l', 'test/fixtures/custom-lookup-flaky.json']);
   proc.on('error', function(err) {
     t.error(err);
   });
@@ -85,7 +90,7 @@ test('citgm-all: flaky-fail ignoring flakyness', function (t) {
 
 test('citgm-all: skip /w rootcheck /w tap to fs /w junit to fs /w append', function (t) {
   t.plan(1);
-  var proc = spawn(citgmAllPath, ['-l', 'test/fixtures/custom-lookup-skip.json', '-s', '--tap', '/dev/null', '--junit', '/dev/null', '-a']);
+  var proc = callCitgm(['-l', 'test/fixtures/custom-lookup-skip.json', '-s', '--tap', '/dev/null', '--junit', '/dev/null', '-a']);
   proc.on('error', function(err) {
     t.error(err);
   });
@@ -96,16 +101,19 @@ test('citgm-all: skip /w rootcheck /w tap to fs /w junit to fs /w append', funct
 
 test('bin: sigterm', function (t) {
   t.plan(1);
-
-  var proc = spawn(citgmAllPath, ['-l', 'test/fixtures/custom-lookup.json', '-m']);
-  proc.on('error', function(err) {
-    t.error(err);
-    t.fail('we should not get an error testing omg-i-pass');
-  });
-  proc.stdout.once('data', function () {
-    proc.kill('SIGINT');
-  });
-  proc.on('exit', function (code) {
-    t.equal(code, 1, 'citgm-all should fail');
-  });
+  if ( process.platform === 'win32' ) {
+    t.pass('SKIP on Windows');
+  } else {
+    var proc = callCitgm(['-l', 'test/fixtures/custom-lookup.json', '-m']);
+    proc.on('error', function(err) {
+      t.error(err);
+      t.fail('we should not get an error testing omg-i-pass');
+    });
+    proc.stdout.once('data', function () {
+      proc.kill('SIGINT');
+    });
+    proc.on('exit', function (code) {
+      t.equal(code, 1, 'citgm-all should fail');
+    });
+  }
 });

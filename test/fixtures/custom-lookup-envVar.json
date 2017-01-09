@@ -4,6 +4,7 @@
     "envVar": {
       "testenvVar": "thisisatest"
     },
-    "script": "test-envVar.sh"
+    "script": "test-envVar.sh",
+    "scriptWin": "test-envVar.bat"
   }
 }

@@ -23,7 +23,12 @@ var failTemp = path.join(sandbox, 'omg-i-fail');
 var badFixtures = path.join(fixtures, 'omg-i-do-not-support-testing');
 var badTemp = path.join(sandbox, 'omg-i-do-not-support-testing');
 
-var customScript = path.join(fixtures, 'example-test-script-passing.sh');
+var customScript = '';
+if ( process.platform === 'win32' ) {
+  customScript = path.join(fixtures, 'example-test-script-passing.bat');
+} else {
+  customScript = path.join(fixtures, 'example-test-script-passing.sh');
+}
 
 test('npm-test: setup', function (t) {
   t.plan(7);
@@ -149,31 +154,41 @@ test('npm-test: custom script does not exist', function (t) {
 });
 
 test('npm-test: alternative test-path', function (t) {
-  // Same test as 'basic module passing', except with alt node bin which fails.
-  var nodeBinName = npmTest.__get__('nodeBinName');
-  npmTest.__set__('nodeBinName', 'fake-node');
-  var context = {
-    emit: function() {},
-    path: sandbox,
-    module: {
-      name: 'omg-i-pass'
-    },
-    meta: {},
-    options: {
-      npmLevel: 'silly',
-      testPath: path.resolve(__dirname, '..', 'fixtures', 'fakenodebin')
-    }
-  };
-  npmTest(context, function (err) {
-    npmTest.__set__('nodeBinName', nodeBinName);
-    t.equals(err && err.message, 'The canary is dead:');
+  if ( process.platform === 'win32' ) {
+    t.pass('SKIP on Windows');
     t.end();
-  });
+  } else {
+    // Same test as 'basic module passing', except with alt node bin which fails.
+    var nodeBinName = npmTest.__get__('nodeBinName');
+    npmTest.__set__('nodeBinName', 'fake-node');
+    var context = {
+      emit: function() {},
+      path: sandbox,
+      module: {
+        name: 'omg-i-pass'
+      },
+      meta: {},
+      options: {
+        npmLevel: 'silly',
+        testPath: path.resolve(__dirname, '..', 'fixtures', 'fakenodebin')
+      }
+    };
+    npmTest(context, function (err) {
+      npmTest.__set__('nodeBinName', nodeBinName);
+      t.equals(err && err.message, 'The canary is dead:');
+      t.end();
+    });
+  }
 });
 
 test('npm-test: teardown', function (t) {
-  rimraf(sandbox, function (err) {
-    t.error(err);
+  if ( process.platform === 'win32' ) {
+    t.pass('SKIP on Windows');
     t.end();
-  });
+  } else {
+    rimraf(sandbox, function (err) {
+      t.error(err);
+      t.end();
+    });
+  }
 });

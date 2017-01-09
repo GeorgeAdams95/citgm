@@ -16,7 +16,10 @@ test('spawn:', function (t) {
   });
 
   child.on('close', function () {
-    t.equals(message, 'Hello world.\n', 'we should receive "Hello world." on stdout');
+    var wanted = (process.platform === 'win32') ?
+        '\"Hello world.\"\r\n' :
+        'Hello world.\n';
+    t.equals(message, wanted, 'we should receive "Hello world." on stdout');
     t.equals(error, '', 'there should be no data on stderr');
     t.end();
   });
