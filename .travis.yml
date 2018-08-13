@@ -1,8 +1,8 @@
 language: node_js
 os:
   - linux
+  - linux-ppc64le
   - osx
 node_js:
-  - "7"
   - "6"
-  - "4"
+  - "8"
